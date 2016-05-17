@@ -29,25 +29,25 @@ Fired when selecting a specific day of the month.
 
         <div layout horizontal wrap>
           <template repeat="{{week, w in weeks}}">
-            
+
             <template repeat="{{day, d in week}}">
               <div layout horizontal center-justified
-                  class="day {{isSameDay(weeksFull[w][d], nowDate) ? 'currentday':''}} {{!isDayInMonth(weeksFull[w][d], date) ? 'offday':''}}"
-                  date="{{weeksFull[w][d]}}" 
+                  class="day {{dayClasses[w][d]}}"
+                  date="{{weeksFull[w][d]}}"
                   selected?="{{isSameDay(weeksFull[w][d], selectedDate)}}"
                   on-tap="{{selectDay}}">
                 <div layout horizontal center>{{day}}</div>
               </div>
             </template>
-            
+
           </template>
         </div>
 
       </div>
     </div>
-     
+
   </template>
- 
+
   <script>
   (function(){
 
@@ -63,13 +63,13 @@ Fired when selecting a specific day of the month.
 
       domReady: function() {
         this.updateWeeks();
-      }, 
+      },
 
       datesEqual: function(d1, d2) {
         if (!d1 || !d2) return false;
         return d1.getTime() == d2.getTime();
       },
-      
+
       isSameDay: function(d1, d2) {
         if (!d1 || !d2) return false;
         return this.dateUtils.format(d1) == this.dateUtils.format(d2);
@@ -82,7 +82,7 @@ Fired when selecting a specific day of the month.
 
       dateChanged: function(oldDate, newDate) {
         // if the month & year hasn't changed, no need to update
-        if (oldDate && 
+        if (oldDate &&
             oldDate.getMonth() == newDate.getMonth() &&
             oldDate.getFullYear() == newDate.getFullYear()) {
           return;
@@ -90,19 +90,31 @@ Fired when selecting a specific day of the month.
 
         // updates the model data for the weeks grids
         this.weeksFull = this.dateUtils.getWeekArray(this.date);
-        this.weeks = this.dateUtils.getWeekArray(this.date).map(function(week){
+        this.dayClasses = [];
+        this.weeks = this.weeksFull.map(function(week){
+          var weekClasses = [];
+          this.dayClasses.push(weekClasses)
           if (!week || week == null) return null;
-          return week.map(function(day){
-            return day ? day.getDate() : null;
-          })
-        });
+
+          return week.map(function(day) {
+            if (day) {
+              var classes = '';
+              if (this.nowDate && this.isSameDay(day, this.nowDate)) { classes += ' currentday' };
+              if (this.date && !this.isDayInMonth(day, this.date)) { classes += ' offday' };
+              weekClasses.push(classes);
+              return day.getDate();
+            } else {
+              weekClasses.push('');
+            }
+          }.bind(this));
+        }.bind(this));
 
         // hacky - using our parent's methods
         this.templateInstance.model.renderNode(this.$.days.querySelector('.weeks'));
       },
 
       updateWeeks: function() {
-        
+
       },
 
       selectDay: function(e, detail, sender) {
@@ -110,7 +122,7 @@ Fired when selecting a specific day of the month.
       }
 
     })
-    
+
   })()
   </script>
 </polymer-element>
